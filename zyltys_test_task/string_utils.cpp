@@ -53,11 +53,13 @@ word_t get_next_word(size_t* p_text_curr_pos, const char_t * text, size_t text_l
 	while ((text_length > pos) && (c = *(text + pos)) && string_t::traits_type::not_eof(c)) {
 		if (is_not_a_word(c)) {
 			word_length = pos - pos_start;
-			//TODO: validate legth?
 			break;
 		}
 		++pos;
 	}
+	if (!word_length && pos == text_length) {
+		word_length = pos - pos_start ;
+	} 
 	*p_text_curr_pos = ++pos;
 	return { word_p_start, word_length };
 }
@@ -66,26 +68,43 @@ int string_utils::word_count(const string_t & text)
 {
 	if (text.empty()) return 0;
 	size_t text_pos = 0;
-	size_t text_length = text.length();
-	const char_t* p_text = text.c_str();
+
 	size_t wcount = 0;
-	while (get_next_word(&text_pos, p_text, text_length) != nullword) {
+	while (get_next_word(&text_pos, text.c_str(), text.length()) != nullword) {
 		++wcount;
 	}
 	return wcount;
 }
 
+#include <stdio.h>
 
-const string_t & string_utils::get_longest_word(const string_t & text)
+string_list_t string_utils::get_longest_word(const string_t & text)
 {
-	return text;
+	if (text.empty()) return string_list_t();
+	size_t text_pos = 0;
+ 
+	size_t max_word_length = 0;
+	word_t curr_word;
+	string_list_t longest_words;
+
+	while (( curr_word = get_next_word(&text_pos, text.c_str(), text.length()) ) != nullword) {
+		if (max_word_length < curr_word.length) {
+			longest_words.clear();
+			longest_words.push_back(string_t(curr_word.p_start, curr_word.length));
+			max_word_length = curr_word.length;
+		} else if (max_word_length == curr_word.length){
+			longest_words.push_back(string_t(curr_word.p_start, curr_word.length));
+		}
+	}  
+	return longest_words;
+
 }
-const string_t & get_most_bloat_word(const string_t & text)
+string_list_t get_most_bloat_word(const string_t & text)
 {
-	return text;
+	return string_list_t();
 }
-const string_t & reverse_words(const string_t & text)
+string_list_t reverse_words(const string_t & text)
 {
-	return text;
+	return string_list_t();
 }
 }

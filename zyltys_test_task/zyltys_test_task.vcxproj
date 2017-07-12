@@ -147,6 +147,7 @@
     <ClCompile Include="lorem_ipsum.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="string_utils.cpp" />
+    <ClCompile Include="test_utils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
