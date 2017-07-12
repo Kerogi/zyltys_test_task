@@ -139,10 +139,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="lorem_ipsum.h" />
     <ClInclude Include="string_utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="man.cpp" />
+    <ClCompile Include="lorem_ipsum.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="string_utils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

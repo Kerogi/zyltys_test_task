@@ -1,0 +1,4 @@
+#include "lorem_ipsum.h"
+
+
+const char * lorem_ipsum_wc123 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur scelerisque velit ac gravida accumsan. Duis at varius erat. Vivamus ultricies eleifend tincidunt. Pellentesque laoreet diam quis tellus convallis ornare quis in turpis. Donec tempor risus ut finibus gravida. Sed at diam rhoncus, commodo metus quis, dignissim enim. Suspendisse venenatis felis ut tellus cursus, id volutpat neque feugiat. Praesent feugiat viverra ligula, lobortis gravida leo auctor et. Vivamus egestas orci quam, vitae consectetur nibh ullamcorper id. Suspendisse laoreet dui dapibus massa lobortis, vitae consectetur erat viverra. Nunc efficitur neque sit amet odio hendrerit dictum. Integer eleifend at justo nec pharetra. Suspendisse id faucibus augue. Phasellus massa libero, aliquet et euismod sed, facilisis ac nunc. Duis pharetra, lacus vitae vestibulum ornare, sapien orci blandit lectus.";

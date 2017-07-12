@@ -7,9 +7,14 @@ namespace string_utils
 using char_t = string_t::traits_type::char_type;
 
 struct word_t {
-	const char_t * const pstr;
-	const size_t length;
+	const char_t * p_start;
+	size_t length;
 };
+
+bool operator!=(const word_t& left, const word_t& right)
+{
+	return left.p_start != right.p_start;
+}
 
 static word_t nullword = { nullptr, 0 };
 
@@ -34,12 +39,12 @@ bool is_a_word(CharT c) {
 word_t get_next_word(size_t* p_text_curr_pos, const char_t * text, size_t text_length) {
 	char_t c;
 	auto pos = *p_text_curr_pos;
-	const char_t* p_word_start = nullptr;
-	size_t word_length = 0;
+	const char_t* word_p_start = nullword.p_start;
+	size_t word_length = nullword.length;
 
 	while ((text_length > pos) && (c = *(text + pos)) && string_t::traits_type::not_eof(c)) {
 		if (is_a_word(c)) {
-			p_word_start = (text + pos);
+			word_p_start = (text + pos);
 			break;
 		}
 		++pos;
@@ -54,19 +59,24 @@ word_t get_next_word(size_t* p_text_curr_pos, const char_t * text, size_t text_l
 		++pos;
 	}
 	*p_text_curr_pos = ++pos;
-	return { p_word_start, word_length };
+	return { word_p_start, word_length };
 }
 
 int string_utils::count_words(const string_t & text)
 {
 	if (text.empty()) return 0;
+	size_t text_pos = 0;
 	size_t text_length = text.length();
-	size_t text_length = text.length();
-	std::vector<word_t> words;
-	word_t cur_word;
-	while(cur_word = get_next_word)
-	return 0;
+	const char_t* p_text = text.c_str();
+	//std::vector<word_t> words;
+	//word_t cur_word;
+	size_t wcount = 0;
+	while (get_next_word(&text_pos, p_text, text_length) != nullword) {
+		++wcount;
+	}
+	return wcount;
 }
+
 
 const string_t & string_utils::get_longest_word(const string_t & text)
 {
