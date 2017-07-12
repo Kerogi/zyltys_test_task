@@ -1,7 +1,9 @@
 #include "string_utils.h"
 #include <cctype>
 #include <cwctype>
-#include <vector>
+#include <map>
+
+#include "misc_utils.h"
 
 namespace string_utils 
 {
@@ -73,6 +75,32 @@ int string_utils::word_count(const string_t & text)
 		++wcount;
 	}
 	return wcount;
+}
+
+text_stats_t text_stats(const string_t & text)
+{
+	if (text.empty()) return text_stats_t();
+	size_t text_pos = 0;
+	const char_t * p_text = text.c_str();
+	word_t curr_word;
+	text_stats_t stats;
+
+	
+	std::map<string_t, poitions_list_t>  words_map;
+	std::list<string_t>		words_order;
+
+	while ((curr_word = get_next_word(&text_pos, p_text, text.length())) != nullword) {
+		string_t word(curr_word.p_start, curr_word.length);
+		if (words_map.find(word) == words_map.end()) {
+			words_order.push_back(word);
+		}
+		words_map[word].push_back(curr_word.p_start - p_text);
+	}
+	for (const auto& word : words_order) {
+		stats.emplace_back(word, words_map[word]);
+	}
+	
+	return stats;
 }
 
 #include <stdio.h>
@@ -148,6 +176,7 @@ string_list_t get_most_bloat_words(const string_t & text)
 	}
 	return longest_runs_words;
 }
+
 string_list_t reverse_words(const string_t & text, size_t reserve_size)
 {
 	if (text.empty()) return string_list_t();
@@ -166,4 +195,16 @@ string_list_t reverse_words(const string_t & text, size_t reserve_size)
 	return reversed_words;
 
 }
+
+
+bool word_stat_t::operator==(const word_stat_t& rhs) const {
+	return word == rhs.word && positions == rhs.positions;
+}
+
+}
+
+std::ostream& operator<<(std::ostream& os, const string_utils::word_stat_t& s)
+{
+	os << "'" << s.word << "' |" << s.positions.size() << "|=" << s.positions;
+	return os;
 }

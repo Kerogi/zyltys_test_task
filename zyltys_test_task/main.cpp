@@ -11,5 +11,6 @@ int main() {
 	cout << "get longest run tests: " << boolalpha << get_longest_symbol_run_tests(cout) << endl;
 	cout << "get most bloat words tests: " << boolalpha << get_most_bloat_words_tests(cout) << endl;
 	cout << "get reverse words tests: " << boolalpha << reverse_words_tests(cout) << endl;
+	cout << "text stats tests tests: " << boolalpha << text_stats_tests(cout) << endl;
 	return 0;
 }
