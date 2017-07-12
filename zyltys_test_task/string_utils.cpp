@@ -68,8 +68,6 @@ int string_utils::word_count(const string_t & text)
 	size_t text_pos = 0;
 	size_t text_length = text.length();
 	const char_t* p_text = text.c_str();
-	//std::vector<word_t> words;
-	//word_t cur_word;
 	size_t wcount = 0;
 	while (get_next_word(&text_pos, p_text, text_length) != nullword) {
 		++wcount;
