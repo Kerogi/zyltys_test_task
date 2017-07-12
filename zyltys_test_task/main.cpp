@@ -10,7 +10,7 @@ inline bool ASSERT_WC(const string& s, const int expected_wc, const size_t max_s
 	//arrange
 
 	//act
-	int actual_wc = string_utils::count_words(s);
+	int actual_wc = string_utils::word_count(s);
 
 	//assert
 	if (expected_wc == actual_wc) {

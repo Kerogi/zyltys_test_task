@@ -62,7 +62,7 @@ word_t get_next_word(size_t* p_text_curr_pos, const char_t * text, size_t text_l
 	return { word_p_start, word_length };
 }
 
-int string_utils::count_words(const string_t & text)
+int string_utils::word_count(const string_t & text)
 {
 	if (text.empty()) return 0;
 	size_t text_pos = 0;
