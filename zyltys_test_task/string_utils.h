@@ -17,6 +17,8 @@ namespace string_utils
 		//	, positions(positions)
 		//{}
 		bool operator==(const word_stat_t& rhs) const;
+		//bool operator<(const word_stat_t& rhs) const;
+		// bool cmp_by_position (const word_stat_t& lhs, const word_stat_t& rhs);
 		//std::ostream& operator<<(std::ostream& os) const;
 	};
 

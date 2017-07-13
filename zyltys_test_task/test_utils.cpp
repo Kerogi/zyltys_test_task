@@ -152,7 +152,7 @@ std::ostream& text_stats_tests(std::ostream & os)
 	    { { { "hello", {0}   }, { "world",  {6} } }, "hello world" },
     	{ { { "hello", {0}   }, { "world",  {6} } }, "hello world      " },
 		{ { { "hello", {8}   }, { "world", {14} } }, "        hello world" },
-		{ { { "world", {8,20}}, { "1hello", {14} } }, "        world hello world" },
+		{ { { "world", {8,20}}, { "hello", {14} } }, "        world hello world" },
 		{ {}, " " },
 		{ {}, "                " },
 		{ {}, "" },
@@ -315,7 +315,7 @@ std::ostream& split_text_to_chukns_tests(std::ostream & os)
 		auto sit = s_lst.begin();
 		auto cit = ch_lst.begin();
 		for (; sit != s_lst.end() && cit != ch_lst.end(); ++sit, ++cit) {
-			if (*sit != string_utils::string_t(cit->chunk_start, cit->chunk_length)) return false;
+			if (*sit != string_utils::string_t(cit->chunk_text + cit->chunk_start, cit->chunk_length)) return false;
 		}
 		return true;
 	};
@@ -327,4 +327,75 @@ std::ostream& split_text_to_chukns_tests(std::ostream & os)
 	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
 	TEST_FOOTER(result)
 	return os;
+}
+
+
+
+std::ostream& word_count_tests_mt(std::ostream & os)
+{
+	TEST_HEADER("word count mt func")
+
+		using test_case = TestCase_t <int>;
+
+	std::vector<test_case> test_cases = {
+		{ 2, "hello world" },
+		{ 2, "hello world      " },
+		{ 2, "        hello world" },
+		{ 10, "h e l l o w o r l d" },
+		{ 1, "h" },
+		{ 1, "hello" },
+		{ 4, "hello             world to you" },
+		{ 0, " " },
+		{ 0, "                " },
+		{ 0, "" },
+		{ 2, "hello             world\0 to you" },
+		{ 123, lorem_ipsum_wc123 }
+	};
+
+	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
+		return simple_test_return_value(os, string_utils_mt::word_count_mt, val, arg, 4);
+	};
+
+	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
+	TEST_FOOTER(result)
+		return os;
+}
+
+
+std::ostream& text_stats_mt_tests(std::ostream & os)
+{
+	TEST_HEADER("text stats mt func")
+
+	using test_case = TestCase_t <string_utils::text_stats_t>;
+
+	std::vector<test_case> test_cases = {
+		{ { { "hello",{ 0 } },{ "world",{ 6 } } }, "hello world" },
+		{ { { "hello",{ 0 } },{ "world",{ 6 } } }, "hello world      " },
+		{ { { "hello",{ 8 } },{ "world",{ 14 } } }, "        hello world" },
+		{ { { "world",{ 8,20 } },{ "hello",{ 14 } } }, "        world hello world" },
+		{ {}, " " },
+		{ {}, "                " },
+		{ {}, "" },
+		{ { { "hello",{ 0 } },{ "world",{ 18 } } }, "hello             world\0 to you" }
+	};
+
+	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
+		return simple_test_return_value(os, string_utils_mt::text_stats_mt, val, arg, 4);
+	};
+
+	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
+	TEST_FOOTER(result)
+		return os;
+}
+
+std::ostream& text_stats_mt_vs_st_tests(std::ostream & os)
+{
+	TEST_HEADER("text stats mt vs st func")
+	string_utils::text_stats_t st_stats_for_lorem_ipsum = string_utils::text_stats(lorem_ipsum_wc123);
+	string_utils::text_stats_t mt_stats_for_lorem_ipsum = string_utils_mt::text_stats_mt(lorem_ipsum_wc123);
+	bool result = st_stats_for_lorem_ipsum == mt_stats_for_lorem_ipsum;
+	//os << mt_stats_for_lorem_ipsum << std::endl;
+
+	TEST_FOOTER(result)
+		return os;
 }

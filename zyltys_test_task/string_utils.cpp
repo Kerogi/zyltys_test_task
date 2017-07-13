@@ -195,22 +195,31 @@ string_list_t reverse_words(const string_t & text)
 
 }
 
-bool word_stat_t::operator==(const word_stat_t& rhs) const {
-
+bool word_stat_t::operator==(const word_stat_t& rhs) const 
+{
 	return word == rhs.word && positions == rhs.positions;
 }
+//
+//bool word_stat_t::operator<(const word_stat_t& rhs) const
+//{
+//	return *positions.begin() < *rhs.positions.begin();
+//}
 /*
 std::ostream & word_stat_t::operator<<(std::ostream & os) const
 {
 	// TODO: вставьте здесь оператор return
 }
 */
+
+//bool word_stat_t::cmp_by_position(const word_stat_t& lhs, const word_stat_t& rhs) {
+//	return lhs.positions.front() < rhs.positions.front();
+//};
 }
 
 std::ostream& operator<<(std::ostream& os, const string_utils::word_stat_t& s)
 {
 	using namespace quoted_string;
 
-	os << "'" << s.word << "' |" << s.positions.size() << "|=" << s.positions;
+	os << s.word << " |" << s.positions.size() << "|=" << s.positions;
 	return os;
 }
