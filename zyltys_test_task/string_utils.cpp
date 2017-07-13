@@ -177,7 +177,7 @@ string_list_t get_most_bloat_words(const string_t & text)
 	return longest_runs_words;
 }
 
-string_list_t reverse_words(const string_t & text, size_t reserve_size)
+string_list_t reverse_words(const string_t & text)
 {
 	if (text.empty()) return string_list_t();
 	size_t text_pos = 0;

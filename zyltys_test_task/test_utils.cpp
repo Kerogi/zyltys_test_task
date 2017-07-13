@@ -9,30 +9,97 @@
 #include "string_utils.h"
 #include "lorem_ipsum.h"
 
+static  std::string h1line30(30, '=');
+static  std::string h2line30(30, '-');
 
-bool test_word_count(std::ostream & os, const std::string & s, const int expected_wc, const size_t max_show_text_length=30) {
+#define TEST_HEADER(TEST_NAME) 	std::string test_name (#TEST_NAME);{os << h1line30 << std::endl;\
+								os << "\tStarting test suite for "##TEST_NAME << std::endl;\
+								os << h2line30 << std::endl; }
+#define TEST_FOOTER(RESULT)  { os << h2line30 << std::endl; \
+								os << "\tTest suite for " << test_name << " finished " << ((RESULT)? "SUCCESSFULLY" : "UNSUCCESSFULLY" ) << std::endl; }
+template <typename Arg>
+size_t print_1arg(std::ostream& os, size_t ArgIdx, const std::string& delim, Arg&& arg) {
+	if (ArgIdx > 0) os << delim;
+	os << ArgIdx << ": " << arg;
+	return ArgIdx;
+}
+
+template <int max_show_text_length=30>
+size_t print_1arg(std::ostream& os, size_t ArgIdx, const std::string& delim, const std::string& s) {
+	if (ArgIdx > 0) os << delim;
+	os << ArgIdx << ": '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'";
+	return ArgIdx;
+}
+template <typename... Args>
+size_t print_args(std::ostream& out, const std::string& delim, Args&&... args)
+{
+	size_t idx = 0;
+	size_t dummy[1 + sizeof...(args)] = { 0, print_1arg(out, idx++, delim, args)... };
+	return idx;
+}
+
+template<typename Func2TestT, typename FuncRetT, typename ...FuncArgsT>
+bool test_return_value(std::ostream & os, Func2TestT&& func, FuncRetT expected_return_value, FuncArgsT&&... func_args) {
 	//arrange
 	/* <empty> */
 
 	//act
-	int actual_wc = string_utils::word_count(s);
+	const FuncRetT actual_return_value = func(std::forward<FuncArgsT>(func_args)...);
 
 	//assert
-	if (expected_wc == actual_wc) {
-		os << "OK  expected word count == to actual, " << std::setw(3) << expected_wc << " == " << std::setw(3) << actual_wc << ",    for text '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'" << std::endl;
-		return true;
+	bool assert_result = (expected_return_value == actual_return_value);
+	if (!assert_result) {
+		os << " - NOK\n\texpected != actual,\n\t" << expected_return_value << " != " << actual_return_value << ",\n\tfor args (" ;
+		print_args(os, "\n\t\t", std::forward<FuncArgsT>(func_args)...);
+		os << ")" << std::endl;
+	} else {
+		os << " - OK";
 	}
-	else {
-		os << "NOK expected word count != to actual, " << std::setw(3) << expected_wc << " != " << std::setw(3) << actual_wc << ",    for text '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'" << std::endl;
-		return false;
-	}
+
+	return assert_result;
 }
 
-bool word_count_tests(std::ostream & os) {
-	struct test_case {
-		int expected_word_count;
-		const char *text_to_test;
-	};
+template<typename TestValueT>
+struct TestCase_t {
+	using Val = TestValueT;
+	using Arg = const string_utils::string_t;
+
+	Val   expected_value;
+	Arg	  text_to_test;
+};
+
+template<typename Func2TestT, typename TestCaseT>
+bool run_test_cases(std::ostream& os, const std::string& test_name, const Func2TestT& func, const std::vector<TestCaseT> test_cases)
+{
+	size_t total_cases = test_cases.size(); 
+	size_t cases_runned = 0;
+	size_t cases_passed = 0; 
+	size_t cases_failed = 0;
+	for (const TestCaseT& tc : test_cases) {
+		os << "\t\tRunning test for " << test_name << " " << ++cases_runned << " of " << total_cases;
+		if (!func(os, tc.expected_value, tc.text_to_test )) {
+			os << " \tERROR test failed";
+			++cases_failed;
+			//break;
+		} else {
+			++cases_passed;
+		}
+		os << std::endl;
+	}
+	if (total_cases == cases_passed) {
+		os << "\t\tSUCCESS -  all " << cases_passed << " of " << total_cases <<  " test case(s) have PASSED" << std::endl;;
+	} else {
+		os << "\t\tFAILURE - some " << (cases_failed) << " test case(s) have NOT PASS, and some "<<(total_cases- cases_runned)<<" test case(s) have NOT RUNNED of total " << total_cases <<" test case(s)"<< std::endl;;
+	}
+	return total_cases == cases_passed;
+}
+
+std::ostream& word_count_tests(std::ostream & os)
+{
+	TEST_HEADER("word count func")
+
+	using test_case = TestCase_t <int>;
+
 	std::vector<test_case> test_cases = {
 		{ 2, "hello world" },
 		{ 2, "hello world      " },
@@ -47,43 +114,22 @@ bool word_count_tests(std::ostream & os) {
 		{ 2, "hello             world\0 to you" },
 		{ 123, lorem_ipsum_wc123 }
 	};
-	for (const test_case& tc : test_cases) {
-		if (!test_word_count(os, tc.text_to_test, tc.expected_word_count)) {
-			os << "ERROR test failed" <<std:: endl;
-			return false;
-		}
-	}
-	return true;
-}
 
-bool test_text_stats(std::ostream & os, const std::string & s, const string_utils::text_stats_t& expected_stats, const size_t max_show_text_length = 30) {
-	//arrange
-	/* <empty> */
-
-	//act
-	string_utils::text_stats_t actual_stats = string_utils::text_stats(s);
-
-	//assert
-	bool assert_result = (expected_stats == actual_stats);
-	
-	if (assert_result) {
-		os << "OK  expected word count == to actual, " << expected_stats << " == " << actual_stats << ",    for text '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'" << std::endl;
-		return true;
-	}
-	else {
-		os << "NOK expected word count != to actual, " << expected_stats << " != " << actual_stats << ",    for text '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'" << std::endl;
-		return false;
-	}
-	return false;
-}
-/**/
-
-bool text_stats_tests(std::ostream & os) {
-	struct test_case {
-		string_utils::text_stats_t expected_stats;
-		const char *text_to_test;
+	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
+		return test_return_value(os, string_utils::word_count, val, arg);
 	};
-	//stats_helper("hello", { 0 });
+
+	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
+	TEST_FOOTER(result)
+	return os;
+}
+
+std::ostream& text_stats_tests(std::ostream & os)
+{
+	TEST_HEADER("text stats func")
+
+	using test_case = TestCase_t <string_utils::text_stats_t>;
+
 	std::vector<test_case> test_cases = {
 	    { { { "hello", {0}   }, { "world",  {6} } }, "hello world" },
     	{ { { "hello", {0}   }, { "world",  {6} } }, "hello world      " },
@@ -94,39 +140,22 @@ bool text_stats_tests(std::ostream & os) {
 		{ {}, "" },
 		{ { { "hello", {0}   }, { "world", {18} } }, "hello             world\0 to you" }
 	};
-	for (const test_case& tc : test_cases) {
-		if (!test_text_stats(os, tc.text_to_test, tc.expected_stats)) {
-			os << "ERROR test failed" << std::endl;
-			return false;
-		}
-	}
-	return true;
-}
 
-bool test_get_longest_words(std::ostream & os, const std::string & s, const string_utils::string_list_t & expected_longest_words, const size_t max_show_text_length = 30) {
-	//arrange
-	/* <empty> */
-
-	//act
-	const string_utils::string_list_t actual_max_words = string_utils::get_longest_words(s);
-
-	//assert
-	if (expected_longest_words == actual_max_words) {
-		os << "OK  expected longest word list == to actual, " << expected_longest_words << " == " << actual_max_words << ",    for text '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'" << std::endl;
-		return true;
-	}
-	else {
-		os << "NOK expected longest word list != to actual, " << expected_longest_words << " != "  << actual_max_words << ",    for text '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'" << std::endl;
-		return false;
-	}
-}
-
-bool get_longest_word_tests(std::ostream & os)
-{
-	struct test_case {
-		string_utils::string_list_t expected_longest_words;
-		const char *text_to_test;
+	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
+		return test_return_value(os, string_utils::text_stats, val, arg);
 	};
+
+	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
+	TEST_FOOTER(result)
+	return os;
+}
+
+std::ostream& get_longest_word_tests(std::ostream & os)
+{
+	TEST_HEADER("get longest words func")
+
+	using test_case = TestCase_t <string_utils::string_list_t>;
+
 	std::vector<test_case> test_cases = {
 		{ {"hello", "world"} , "hello world" },
 		{ {"worlds"},  "hello worlds      " },
@@ -138,6 +167,7 @@ bool get_longest_word_tests(std::ostream & os)
 		{ {}, "" },
 		{ {}, "               " },
 	};
+
 	string_utils::string_list_t lorem_ipsum_longest_words;
 	{ // caclulatin max word in different way
 		std::string lorem_ipsum_wc123_str(lorem_ipsum_wc123);
@@ -158,40 +188,21 @@ bool get_longest_word_tests(std::ostream & os)
 		} while (iss);
 	}
 	test_cases.push_back({lorem_ipsum_longest_words, lorem_ipsum_wc123});
-	for (const test_case& tc : test_cases) {
-		if (!test_get_longest_words(os, tc.text_to_test, tc.expected_longest_words)) {
-			os << "ERROR test failed" << std::endl;
-			return false;
-		}
-	}
-	return true;
-}
-
-
-
-bool test_get_most_bloat_words(std::ostream & os, const std::string & s, const string_utils::string_list_t & expected_bloatest_words, const size_t max_show_text_length = 30) {
-	//arrange
-	/* <empty> */
-
-	//act
-	const string_utils::string_list_t actual_bloatest_words = string_utils::get_most_bloat_words(s);
-
-	//assert
-	if (expected_bloatest_words == actual_bloatest_words) {
-		os << "OK  expected most bloat word list == to actual, " << expected_bloatest_words << " == " << actual_bloatest_words << ",    for text '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'" << std::endl;
-		return true;
-	} else {
-		os << "NOK expected most bloat word list != to actual, " << expected_bloatest_words << " != " << actual_bloatest_words << ",    for text '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'" << std::endl;
-		return false;
-	}
-}
-
-bool get_most_bloat_words_tests(std::ostream & os)
-{
-	struct test_case {
-		string_utils::string_list_t expected_longest_words;
-		const char *text_to_test;
+	
+	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
+		return test_return_value(os, string_utils::get_longest_words, val, arg);
 	};
+
+	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
+	TEST_FOOTER(result)
+	return os;
+}
+
+std::ostream& get_most_bloat_words_tests(std::ostream & os)
+{
+	TEST_HEADER("get most bloat words func")
+
+	using test_case = TestCase_t <string_utils::string_list_t>;
 
 	std::vector<test_case> test_cases = {
 		{ { "hello" } , "hello world" },
@@ -205,59 +216,21 @@ bool get_most_bloat_words_tests(std::ostream & os)
 		{ {"accc"}, "abbccddbb  accc" }, 
 		{ { "abbccddbb", "abbc" }, "abbccddbb  abbc 123" }, 
 	};
-	string_utils::string_list_t lorem_ipsum_longest_words;
-	{ // caclulatin max word in different way
-		std::string lorem_ipsum_wc123_str(lorem_ipsum_wc123);
-		std::istringstream iss(lorem_ipsum_wc123_str);
-		size_t max_word = 0;
 
-		do
-		{
-			std::string subs;
-			iss >> subs;
-			if (max_word < subs.length()) {
-				lorem_ipsum_longest_words.clear();
-				lorem_ipsum_longest_words.push_back(subs);
-				max_word = subs.length();
-			}
-			else if (max_word == subs.length()) {
-				lorem_ipsum_longest_words.push_back(subs);
-			}
-		} while (iss);
-	}
-	//test_cases.push_back({ lorem_ipsum_longest_words, lorem_ipsum_wc123 });
-	for (const test_case& tc : test_cases) {
-		if (!test_get_most_bloat_words(os, tc.text_to_test, tc.expected_longest_words)) {
-			os << "ERROR test failed" << std::endl;
-			return false;
-		}
-	}
-	return true;
-}
-
-bool test_reversed_words(std::ostream & os, const std::string & s, const string_utils::string_list_t & expected_reversed_words, const size_t max_show_text_length = 30) {
-	//arrange
-	/* <empty> */
-
-	//act
-	const string_utils::string_list_t actual_reversed_words = string_utils::reverse_words(s);
-
-	//assert
-	if (expected_reversed_words == actual_reversed_words) {
-		os << "OK  expected most bloat word list == to actual, " << expected_reversed_words << " == " << actual_reversed_words << ",    for text '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'" << std::endl;
-		return true;
-	} else {
-		os << "NOK expected most bloat word list != to actual, " << expected_reversed_words << " != " << actual_reversed_words << ",    for text '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'" << std::endl;
-		return false;
-	}
-}
-
-bool reverse_words_tests(std::ostream & os)
-{
-	struct test_case {
-		string_utils::string_list_t expected_revered_words;
-		const char *text_to_test;
+	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
+		return test_return_value(os, string_utils::get_most_bloat_words, val, arg);
 	};
+
+	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
+	TEST_FOOTER(result)
+	return os;
+}
+
+std::ostream& reverse_words_tests(std::ostream & os)
+{
+	TEST_HEADER("reverse words func")
+
+	using test_case = TestCase_t <string_utils::string_list_t>;
 
 	std::vector<test_case> test_cases = {
 		{ { "world", "hello" } , "hello world" },
@@ -269,61 +242,21 @@ bool reverse_words_tests(std::ostream & os)
 		{ {}, "" },
 		{ {}, "               " },
 	};
-	string_utils::string_list_t lorem_ipsum_longest_words;
-	{ // caclulatin reversed word in different way
-		std::string lorem_ipsum_wc123_str(lorem_ipsum_wc123);
-		std::istringstream iss(lorem_ipsum_wc123_str);
-		size_t max_word = 0;
 
-		do
-		{
-			std::string subs;
-			iss >> subs;
-			if (max_word < subs.length()) {
-				lorem_ipsum_longest_words.clear();
-				lorem_ipsum_longest_words.push_back(subs);
-				max_word = subs.length();
-			}
-			else if (max_word == subs.length()) {
-				lorem_ipsum_longest_words.push_back(subs);
-			}
-		} while (iss);
-	}
-	//test_cases.push_back({ lorem_ipsum_longest_words, lorem_ipsum_wc123 });
-	for (const test_case& tc : test_cases) {
-		if (!test_reversed_words(os, tc.text_to_test, tc.expected_revered_words)) {
-			os << "ERROR test failed" << std::endl;
-			return false;
-		}
-	}
-	return true;
-
-}
-
-bool test_get_longest_symbol_run(std::ostream & os, const std::string & s, size_t expected_longest_run, const size_t max_show_text_length = 30) {
-	//arrange
-	/* <empty> */
-
-	//act
-	const size_t actual_longest_run = string_utils::get_longest_symbol_run(s);
-
-	//assert
-	if (expected_longest_run == actual_longest_run) {
-		os << "OK  expected longest symbol run == to actual, " << expected_longest_run << " == " << actual_longest_run << ",    for text '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'" << std::endl;
-		return true;
-	}
-	else {
-		os << "NOK expected longest symbol run != to actual, " << expected_longest_run << " != " << actual_longest_run << ",    for text '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'" << std::endl;
-		return false;
-	}
-}
-
-bool get_longest_symbol_run_tests(std::ostream & os)
-{
-	struct test_case {
-		size_t expected_longest_run;
-		const char *text_to_test;
+	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
+		return test_return_value(os, string_utils::reverse_words, val, arg);
 	};
+
+	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
+	TEST_FOOTER(result)
+	return os;
+}
+
+std::ostream& get_longest_symbol_run_tests(std::ostream & os)
+{
+	TEST_HEADER("get longest symbol run func")
+
+	using test_case = TestCase_t <size_t>;
 
 	std::vector<test_case> test_cases = {
 		{ 2 , "hello" },
@@ -334,11 +267,11 @@ bool get_longest_symbol_run_tests(std::ostream & os)
 		{ 3 , "abbccddbbaccc" },
 	};
 
-	for (const test_case& tc : test_cases) {
-		if (!test_get_longest_symbol_run(os, tc.text_to_test, tc.expected_longest_run)) {
-			os << "ERROR test failed" << std::endl;
-			return false;
-		}
-	}
-	return true;
+	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
+		return test_return_value(os, string_utils::get_longest_symbol_run, val, arg);
+	};
+
+	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
+	TEST_FOOTER(result)
+	return os;
 }

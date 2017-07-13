@@ -4,6 +4,8 @@
 #include <list>
 #include <vector>
 
+
+
 template<class ItemT>
 std::ostream& operator<<(std::ostream& os, const std::list< ItemT > & list) {
 	os << '(';
