@@ -142,12 +142,14 @@
     <ClInclude Include="lorem_ipsum.h" />
     <ClInclude Include="misc_utils.h" />
     <ClInclude Include="string_utils.h" />
+    <ClInclude Include="string_utils_mt.h" />
     <ClInclude Include="test_utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lorem_ipsum.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="string_utils.cpp" />
+    <ClCompile Include="string_utils_mt.cpp" />
     <ClCompile Include="test_utils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -260,3 +260,5 @@ paket-files/
 __pycache__/
 *.pyc
 /zyltys_test_task/test_utils — копия.cpp
+/zyltys_test_task/test_utils — копия.h
+/zyltys_test_task/test_utils — копия (2).cpp

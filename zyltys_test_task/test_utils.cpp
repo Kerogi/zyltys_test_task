@@ -7,6 +7,7 @@
 #include "misc_utils.h"
 #include "test_utils.h"
 #include "string_utils.h"
+#include "string_utils_mt.h"
 #include "lorem_ipsum.h"
 
 static  std::string h1line30(30, '=');
@@ -18,20 +19,15 @@ static  std::string h2line30(30, '-');
 #define TEST_FOOTER(RESULT)  { os << h2line30 << std::endl; \
 								os << "\tTest suite for " << test_name << " finished " << ((RESULT)? "SUCCESSFULLY" : "UNSUCCESSFULLY" ) << std::endl; }
 template <typename Arg>
-size_t print_1arg(std::ostream& os, size_t ArgIdx, const std::string& delim, Arg&& arg) {
+size_t print_1arg(std::ostream& os, size_t ArgIdx, const char* delim, Arg&& arg) {
+	using namespace quoted_string;
 	if (ArgIdx > 0) os << delim;
 	os << ArgIdx << ": " << arg;
 	return ArgIdx;
 }
 
-template <int max_show_text_length=30>
-size_t print_1arg(std::ostream& os, size_t ArgIdx, const std::string& delim, const std::string& s) {
-	if (ArgIdx > 0) os << delim;
-	os << ArgIdx << ": '" << ((s.length() <= max_show_text_length) ? s : s.substr(0, max_show_text_length - 3) + "...") << "'";
-	return ArgIdx;
-}
 template <typename... Args>
-size_t print_args(std::ostream& out, const std::string& delim, Args&&... args)
+size_t print_args(std::ostream& out, const char* delim, Args&&... args)
 {
 	size_t idx = 0;
 	size_t dummy[1 + sizeof...(args)] = { 0, print_1arg(out, idx++, delim, args)... };
@@ -39,20 +35,42 @@ size_t print_args(std::ostream& out, const std::string& delim, Args&&... args)
 }
 
 template<typename Func2TestT, typename FuncRetT, typename ...FuncArgsT>
-bool test_return_value(std::ostream & os, Func2TestT&& func, FuncRetT expected_return_value, FuncArgsT&&... func_args) {
+bool simple_test_return_value(std::ostream & os, Func2TestT&& func, FuncRetT expected_return_value, FuncArgsT&&... func_args) {
 	//arrange
 	/* <empty> */
-
+	using namespace quoted_string;
 	//act
 	const FuncRetT actual_return_value = func(std::forward<FuncArgsT>(func_args)...);
 
 	//assert
 	bool assert_result = (expected_return_value == actual_return_value);
 	if (!assert_result) {
-		os << " - NOK\n\texpected != actual,\n\t" << expected_return_value << " != " << actual_return_value << ",\n\tfor args (" ;
+		os << " - NOK\n\texpected != actual,\n\t" << expected_return_value << " != " << actual_return_value << ",\n\tfor test args (" ;
 		print_args(os, "\n\t\t", std::forward<FuncArgsT>(func_args)...);
 		os << ")" << std::endl;
 	} else {
+		os << " - OK";
+	}
+
+	return assert_result;
+}
+
+template<typename Func2TestT, typename ExpRetT, typename CmpRetT, typename ...FuncArgsT>
+bool cmp_test_return_value(std::ostream & os, Func2TestT&& func, ExpRetT expected_return_value, CmpRetT cmp, FuncArgsT&&... func_args) {
+	//arrange
+	/* <empty> */
+
+	//act
+	const auto actual_return_value = func(std::forward<FuncArgsT>(func_args)...);
+
+	//assert
+	bool assert_result = cmp(expected_return_value, actual_return_value);
+	if (!assert_result) {
+		os << " - NOK\n\tcomparator pred failed with for expected "<< expected_return_value<< " and actual "<< actual_return_value <<" values,\n\tfor test args (";
+		print_args(os, "\n\t\t", std::forward<FuncArgsT>(func_args)...);
+		os << ")" << std::endl;
+	}
+	else {
 		os << " - OK";
 	}
 
@@ -116,7 +134,7 @@ std::ostream& word_count_tests(std::ostream & os)
 	};
 
 	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
-		return test_return_value(os, string_utils::word_count, val, arg);
+		return simple_test_return_value(os, string_utils::word_count, val, arg);
 	};
 
 	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
@@ -134,7 +152,7 @@ std::ostream& text_stats_tests(std::ostream & os)
 	    { { { "hello", {0}   }, { "world",  {6} } }, "hello world" },
     	{ { { "hello", {0}   }, { "world",  {6} } }, "hello world      " },
 		{ { { "hello", {8}   }, { "world", {14} } }, "        hello world" },
-		{ { { "world", {8,20}}, { "hello", {14} } }, "        world hello world" },
+		{ { { "world", {8,20}}, { "1hello", {14} } }, "        world hello world" },
 		{ {}, " " },
 		{ {}, "                " },
 		{ {}, "" },
@@ -142,7 +160,7 @@ std::ostream& text_stats_tests(std::ostream & os)
 	};
 
 	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
-		return test_return_value(os, string_utils::text_stats, val, arg);
+		return simple_test_return_value(os, string_utils::text_stats, val, arg);
 	};
 
 	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
@@ -190,7 +208,7 @@ std::ostream& get_longest_word_tests(std::ostream & os)
 	test_cases.push_back({lorem_ipsum_longest_words, lorem_ipsum_wc123});
 	
 	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
-		return test_return_value(os, string_utils::get_longest_words, val, arg);
+		return simple_test_return_value(os, string_utils::get_longest_words, val, arg);
 	};
 
 	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
@@ -218,7 +236,7 @@ std::ostream& get_most_bloat_words_tests(std::ostream & os)
 	};
 
 	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
-		return test_return_value(os, string_utils::get_most_bloat_words, val, arg);
+		return simple_test_return_value(os, string_utils::get_most_bloat_words, val, arg);
 	};
 
 	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
@@ -244,7 +262,7 @@ std::ostream& reverse_words_tests(std::ostream & os)
 	};
 
 	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
-		return test_return_value(os, string_utils::reverse_words, val, arg);
+		return simple_test_return_value(os, string_utils::reverse_words, val, arg);
 	};
 
 	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
@@ -268,7 +286,42 @@ std::ostream& get_longest_symbol_run_tests(std::ostream & os)
 	};
 
 	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
-		return test_return_value(os, string_utils::get_longest_symbol_run, val, arg);
+		return simple_test_return_value(os, string_utils::get_longest_symbol_run, val, arg);
+	};
+
+	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
+	TEST_FOOTER(result)
+	return os;
+}
+
+std::ostream& split_text_to_chukns_tests(std::ostream & os)
+{
+	TEST_HEADER("split text to chnks func")
+
+	using test_case = TestCase_t <string_utils::string_list_t>;
+
+	std::vector<test_case> test_cases = {
+		{ {"hello"} , "hello" },
+		{ {"hellooo"},  "hellooo" },
+		{ {"a"} , "a" },
+		{ {}, "" },
+		{ { "          ", "  aaa"}, "            aaa" },
+		{ { "abbccddbbaccc" } , "abbccddbbaccc" },
+		{ { "ab bcc", " ddbbaccc ", "        ", " hello", " world" } , "ab bcc ddbbaccc          hello world" }
+	};
+
+	auto cmp =  [](const string_utils::string_list_t& s_lst, const string_utils_mt::chunk_list_t& ch_lst) -> bool {
+		if (s_lst.size() != ch_lst.size()) return false;
+		auto sit = s_lst.begin();
+		auto cit = ch_lst.begin();
+		for (; sit != s_lst.end() && cit != ch_lst.end(); ++sit, ++cit) {
+			if (*sit != string_utils::string_t(cit->chunk_start, cit->chunk_length)) return false;
+		}
+		return true;
+	};
+
+	auto test_func_adapter = [&](std::ostream & os, test_case::Val val, const test_case::Arg& arg) -> bool {
+		return cmp_test_return_value(os, string_utils_mt::split_text_to_chunks_by_word, val, cmp, arg, 10);
 	};
 
 	bool result = run_test_cases(os, test_name, test_func_adapter, test_cases);
