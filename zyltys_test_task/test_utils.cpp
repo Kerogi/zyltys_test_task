@@ -369,13 +369,13 @@ std::ostream& text_stats_mt_tests(std::ostream & os)
 	using test_case = TestCase_t <string_utils::text_stats_t>;
 
 	std::vector<test_case> test_cases = {
+		{ {}, " " },
+		{ {}, "                " },
+		{ {}, "" },
 		{ { { "hello",{ 0 } },{ "world",{ 6 } } }, "hello world" },
 		{ { { "hello",{ 0 } },{ "world",{ 6 } } }, "hello world      " },
 		{ { { "hello",{ 8 } },{ "world",{ 14 } } }, "        hello world" },
 		{ { { "world",{ 8,20 } },{ "hello",{ 14 } } }, "        world hello world" },
-		{ {}, " " },
-		{ {}, "                " },
-		{ {}, "" },
 		{ { { "hello",{ 0 } },{ "world",{ 18 } } }, "hello             world\0 to you" }
 	};
 
@@ -389,14 +389,35 @@ std::ostream& text_stats_mt_tests(std::ostream & os)
 }
 
 #include <chrono>
+std::ostream& word_count_mt_vs_st_tests(std::ostream & os)
+{
+	TEST_HEADER("word_count`` mt vs st func")
+		auto t0 = std::chrono::high_resolution_clock::now();
+	int st_wc_lorem_ipsum = string_utils::word_count(lorem_ipsum_wc2000);
+	auto t1 = std::chrono::high_resolution_clock::now();
+	int mt_wc_for_lorem_ipsum = string_utils_mt::word_count_mt(lorem_ipsum_wc2000);
+	auto t2 = std::chrono::high_resolution_clock::now();
+	bool result = st_wc_lorem_ipsum == mt_wc_for_lorem_ipsum;
 
+	auto st_duration = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+	auto mt_duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+	os << "wc: " << st_wc_lorem_ipsum << std::endl;
+	os << " single threaded took: " << std::setw(10) << st_duration << " microsec" << std::endl;
+	os << "  multi threaded took: " << std::setw(10) << mt_duration << " microsec" << std::endl;
+	//os << mt_stats_for_lorem_ipsum << std::endl;
+	result = result &&  st_duration > mt_duration;
+
+
+	TEST_FOOTER(result)
+		return os;
+}
 std::ostream& text_stats_mt_vs_st_tests(std::ostream & os)
 {
 	TEST_HEADER("text stats mt vs st func")
 	auto t0 = std::chrono::high_resolution_clock::now();
-	string_utils::text_stats_t st_stats_for_lorem_ipsum = string_utils::text_stats(lorem_ipsum_wc123);
+	string_utils::text_stats_t st_stats_for_lorem_ipsum = string_utils::text_stats(lorem_ipsum_wc2000);
 	auto t1 = std::chrono::high_resolution_clock::now();
-	string_utils::text_stats_t mt_stats_for_lorem_ipsum = string_utils_mt::text_stats_mt(lorem_ipsum_wc123);
+	string_utils::text_stats_t mt_stats_for_lorem_ipsum = string_utils_mt::text_stats_mt(lorem_ipsum_wc2000);
 	auto t2 = std::chrono::high_resolution_clock::now();
 	bool result = st_stats_for_lorem_ipsum == mt_stats_for_lorem_ipsum;
 

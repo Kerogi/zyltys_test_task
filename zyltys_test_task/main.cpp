@@ -18,6 +18,7 @@ int main() {
 	cout << word_count_tests_mt << endl;	
 	cout << text_stats_mt_tests << endl;
 
+	cout << word_count_mt_vs_st_tests << endl;
 	cout << text_stats_mt_vs_st_tests << endl;
 	return 0;
 }
