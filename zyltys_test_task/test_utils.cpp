@@ -388,13 +388,25 @@ std::ostream& text_stats_mt_tests(std::ostream & os)
 		return os;
 }
 
+#include <chrono>
+
 std::ostream& text_stats_mt_vs_st_tests(std::ostream & os)
 {
 	TEST_HEADER("text stats mt vs st func")
+	auto t0 = std::chrono::high_resolution_clock::now();
 	string_utils::text_stats_t st_stats_for_lorem_ipsum = string_utils::text_stats(lorem_ipsum_wc123);
+	auto t1 = std::chrono::high_resolution_clock::now();
 	string_utils::text_stats_t mt_stats_for_lorem_ipsum = string_utils_mt::text_stats_mt(lorem_ipsum_wc123);
+	auto t2 = std::chrono::high_resolution_clock::now();
 	bool result = st_stats_for_lorem_ipsum == mt_stats_for_lorem_ipsum;
+
+	auto st_duration = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+	auto mt_duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+	os << " single threaded took: " << std::setw(10) << st_duration << " microsec" << std::endl;
+	os << "  multi threaded took: " << std::setw(10) << mt_duration << " microsec" << std::endl;
 	//os << mt_stats_for_lorem_ipsum << std::endl;
+	result = result &&  st_duration > mt_duration;
+	
 
 	TEST_FOOTER(result)
 		return os;
